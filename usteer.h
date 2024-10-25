@@ -170,6 +170,10 @@ struct usteer_config {
 	uint32_t remote_update_interval;
 	uint32_t remote_node_timeout;
 
+	bool aggressive_all;
+	struct blob_attr *aggressive_mac_list;
+	uint32_t aggressive_disassoc_timer;
+
 	int32_t min_snr;
 	uint32_t min_snr_kick_delay;
 	int32_t min_connect_snr;
@@ -190,7 +194,7 @@ struct usteer_config {
 	uint32_t roam_kick_delay;
 
 	uint32_t band_steering_interval;
-	int32_t band_steering_min_snr; 
+	int32_t band_steering_min_snr;
 
 	uint32_t link_measurement_interval;
 
@@ -285,6 +289,8 @@ struct sta {
 	uint8_t seen_2ghz : 1;
 	uint8_t seen_5ghz : 1;
 
+	bool aggressive;
+
 	uint8_t addr[6];
 };
 
@@ -336,13 +342,19 @@ bool usteer_band_steering_is_target(struct usteer_local_node *ln, struct usteer_
 void usteer_ubus_init(struct ubus_context *ctx);
 void usteer_ubus_kick_client(struct sta_info *si);
 int usteer_ubus_trigger_client_scan(struct sta_info *si);
-int usteer_ubus_band_steering_request(struct sta_info *si);
+int usteer_ubus_band_steering_request(struct sta_info *si,
+                                      uint8_t dialog_token,
+                                      bool disassoc_imminent,
+                                      uint8_t disassoc_timer,
+                                      bool abridged,
+                                      uint8_t validity_period);
 int usteer_ubus_bss_transition_request(struct sta_info *si,
-				       uint8_t dialog_token,
-				       bool disassoc_imminent,
-				       bool abridged,
-				       uint8_t validity_period,
-				       struct usteer_node *target_node);
+                                       uint8_t dialog_token,
+                                       bool disassoc_imminent,
+                                       uint8_t disassoc_timer,
+                                       bool abridged,
+                                       uint8_t validity_period,
+                                       struct usteer_node *target_node);
 
 struct sta *usteer_sta_get(const uint8_t *addr, bool create);
 struct sta_info *usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create);
@@ -375,6 +387,9 @@ void config_get_node_up_script(struct blob_buf *buf);
 
 void config_set_ssid_list(struct blob_attr *data);
 void config_get_ssid_list(struct blob_buf *buf);
+
+void config_set_aggressive_mac_list(struct blob_attr *data);
+void config_get_aggressive_mac_list(struct blob_buf *buf);
 
 int usteer_interface_init(void);
 void usteer_interface_add(const char *name);

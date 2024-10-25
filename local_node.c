@@ -748,7 +748,7 @@ usteer_local_node_process_bss_tm_queries(struct uloop_timeout *timeout)
 		if (!si)
 			continue;
 
-		usteer_ubus_bss_transition_request(si, query->dialog_token, false, false, validity_period, NULL);
+		usteer_ubus_bss_transition_request(si, query->dialog_token, config.aggressive_all, validity_period, true, validity_period, NULL);
 	}
 
 	/* Free pending queries we can not handle */
@@ -977,8 +977,23 @@ void config_get_ssid_list(struct blob_buf *buf)
 		blobmsg_add_blob(buf, config.ssid_list);
 }
 
-void
-usteer_local_nodes_init(struct ubus_context *ctx)
+void config_set_aggressive_mac_list(struct blob_attr *data)
+{
+	free(config.aggressive_mac_list);
+
+	if (data && blobmsg_len(data))
+		config.aggressive_mac_list = blob_memdup(data);
+	else
+		config.aggressive_mac_list = NULL;
+}
+
+void config_get_aggressive_mac_list(struct blob_buf *buf)
+{
+	if (config.aggressive_mac_list)
+		blobmsg_add_blob(buf, config.aggressive_mac_list);
+}
+
+void usteer_local_nodes_init(struct ubus_context *ctx)
 {
 	usteer_register_events(ctx);
 	ubus_lookup(ctx, "hostapd.*", node_list_cb, NULL);

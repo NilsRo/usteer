@@ -60,6 +60,8 @@ void usteer_band_steering_perform_steer(struct usteer_local_node *ln)
 {
 	unsigned int min_count = DIV_ROUND_UP(config.band_steering_interval, config.local_sta_update);
 	struct sta_info *si;
+	uint32_t disassoc_timer;
+	uint32_t validity_period;
 
 	if (!config.band_steering_interval)
 		return;
@@ -81,6 +83,8 @@ void usteer_band_steering_perform_steer(struct usteer_local_node *ln)
 	ln->band_steering_interval = 0;
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
+		/* TODO: Steer only if Client supports > 4000 Frequency */
+
 		/* Check if client is eligable to be steerd */
 		if (!usteer_policy_can_perform_roam(si))
 			continue;
@@ -91,8 +95,18 @@ void usteer_band_steering_perform_steer(struct usteer_local_node *ln)
 			continue;
 		}
 
-		if (si->bss_transition)
-			usteer_ubus_band_steering_request(si);
+		if (si->bss_transition) {
+			if (!si->kick_time && si->sta->aggressive) {
+				si->kick_time = current_time + config.roam_kick_delay;
+				validity_period = 10000 / usteer_local_node_get_beacon_interval(ln); /* ~ 10 seconds */
+				disassoc_timer = (si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln);
+
+				if (si->sta->aggressive)
+					usteer_ubus_band_steering_request(si, 0, true, disassoc_timer, true, validity_period);
+				else
+					usteer_ubus_band_steering_request(si, 0, false, 0, true, validity_period);
+			}
+		}
 
 		si->band_steering.below_snr = false;
 	}

@@ -31,7 +31,7 @@ IF(NL_CFLAGS)
 	SET(SOURCES ${SOURCES} nl80211.c)
 ENDIF()
 
-ADD_DEFINITIONS(-Os -Wall -Werror --std=gnu99 -g3 -Wmissing-declarations)
+ADD_DEFINITIONS(-O0 -Wall -Werror --std=gnu99 -g3 -Wmissing-declarations)
 
 FIND_LIBRARY(libjson NAMES json-c json)
 ADD_EXECUTABLE(usteerd ${SOURCES})

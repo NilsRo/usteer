@@ -1,4 +1,6 @@
 config usteer
+	# OpenWRT guide: https://openwrt.org/docs/guide-user/network/wifi/usteer
+
 	# The network interface for inter-AP communication
 	option 'network' 'lan'
 
@@ -70,6 +72,12 @@ config usteer
 
 	# Timeout (ms) for which a client will not be steered after rejecting a BSS-transition-request
 	#option steer_reject_timeout 60000
+
+	# Use aggressive roaming to push clients to another AP for all stations (0/1)
+	#option aggressive_all 0
+
+	# List of MACs (lower case) to enable aggressive roaming on. If not set all stations will handled aggressive
+	#list aggressive_mac_list ''
 
 	# Timeout (in ms) after which a association following a disassociation is not seen
 	# as a roam
