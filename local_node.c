@@ -183,6 +183,7 @@ usteer_handle_bss_tm_response(struct usteer_local_node *ln, struct blob_attr *ms
 	if (si->bss_transition_response.status_code) {
 		/* Cancel imminent kick in case BSS transition was rejected */
 		si->kick_time = 0;
+		MSG(VERBOSE, "Kick canceled because if rejected transition for sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
 	}
 
 	return 0;
@@ -748,7 +749,7 @@ usteer_local_node_process_bss_tm_queries(struct uloop_timeout *timeout)
 		if (!si)
 			continue;
 
-		usteer_ubus_bss_transition_request(si, query->dialog_token, config.aggressive_all, validity_period, true, validity_period, NULL);
+		usteer_ubus_bss_transition_request(si, query->dialog_token, false, 0, true, validity_period, NULL);
 	}
 
 	/* Free pending queries we can not handle */
