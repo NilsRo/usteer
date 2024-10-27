@@ -183,7 +183,7 @@ usteer_handle_bss_tm_response(struct usteer_local_node *ln, struct blob_attr *ms
 	if (si->bss_transition_response.status_code) {
 		/* Cancel imminent kick in case BSS transition was rejected */
 		si->kick_time = 0;
-		MSG(VERBOSE, "Kick canceled because if rejected transition for sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
+		MSG(VERBOSE, "Kick canceled because transition was rejected by sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
 	}
 
 	return 0;

@@ -96,16 +96,16 @@ void usteer_band_steering_perform_steer(struct usteer_local_node *ln)
 		}
 
 		if (si->bss_transition) {
-			if (!si->kick_time && si->sta->aggressive) {
-				si->kick_time = current_time + config.roam_kick_delay;
-				validity_period = 10000 / usteer_local_node_get_beacon_interval(ln); /* ~ 10 seconds */
-				disassoc_timer = (si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln);
-
-				if (si->sta->aggressive)
-					usteer_ubus_band_steering_request(si, 0, true, disassoc_timer, true, validity_period);
-				else
-					usteer_ubus_band_steering_request(si, 0, false, 0, true, validity_period);
-			}
+			validity_period = 10000 / usteer_local_node_get_beacon_interval(ln); /* ~ 10 seconds */
+			if (si->sta->aggressive) {
+				if (!si->kick_time)	{
+						si->kick_time = current_time + config.roam_kick_delay;
+						si->roam_transition_request_validity_end = current_time + 10000;						
+						disassoc_timer = (si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln);
+						usteer_ubus_band_steering_request(si, 0, true, disassoc_timer, true, validity_period);
+				} 
+			} else
+				usteer_ubus_band_steering_request(si, 0, false, 0, true, validity_period);
 		}
 
 		si->band_steering.below_snr = false;

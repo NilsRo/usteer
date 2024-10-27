@@ -375,7 +375,7 @@ usteer_roam_trigger_sm(struct usteer_local_node *ln, struct sta_info *si)
 
 		if (!si->kick_time && si->sta->aggressive)
 			si->kick_time = current_time + config.roam_kick_delay;
-
+		si->roam_transition_request_validity_end = current_time + 10000;
 		validity_period = 10000 / usteer_local_node_get_beacon_interval(ln); /* ~ 10 seconds */
 		if (si->sta->aggressive) {
 			disassoc_timer = (si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln);
@@ -398,7 +398,11 @@ bool usteer_policy_can_perform_roam(struct sta_info *si)
 		return false;
 
 	/* Skip on pending kick */
-	if (si->kick_time && si->kick_time >= current_time)
+	if (si->kick_time && si->kick_time <= current_time)
+		return false;
+
+	/* Skip if in validity period */
+	if (current_time < si->roam_transition_request_validity_end)
 		return false;
 
 	/* Skip on rejected transition */
