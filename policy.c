@@ -362,7 +362,11 @@ usteer_roam_trigger_sm(struct usteer_local_node *ln, struct sta_info *si)
 		break;
 
 	case ROAM_TRIGGER_IDLE:
-		usteer_roam_sm_start_scan(si, &ev);
+		if ((si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln) > 10)
+			/* Send next bss_transition_request until disassociation timer is higher than 10 beacons */
+			usteer_roam_set_state(si, ROAM_TRIGGER_SCAN_DONE, &ev);
+		else
+			usteer_roam_sm_start_scan(si, &ev);
 		break;
 
 	case ROAM_TRIGGER_SCAN_DONE:
@@ -600,11 +604,9 @@ usteer_local_node_perform_kick(struct usteer_local_node *ln)
 	struct sta_info *si;
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
-		if (si->sta->aggressiveness >= 3) {
-			if (!si->kick_time || si->kick_time > current_time)
-				continue;
-			usteer_ubus_kick_client(si, 12);
-		}
+		if (!si->kick_time || si->kick_time > current_time)
+			continue;
+		usteer_ubus_kick_client(si, 12);
 	}
 }
 
