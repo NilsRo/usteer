@@ -77,8 +77,8 @@ config usteer
 	#option reassociation_delay 30
 	
 	# Aggressiveness of roaming to push STA to another node
-	# 0 = no active roaming / 1 = passive roaming / 2 = roaming with disassociation immiment
-	# 3 = roaming with disassociation immiment and active disassociation
+	# 0 = no active roaming / 1 = passive roaming / 2 = roaming with disassociation imminent
+	# 3 = roaming with disassociation imminent and active disassociation
 	#option aggressiveness 2
 
 	# List of MACs (lower case) with aggressiveness per STA (ff:ff:ff:ff:ff,2)

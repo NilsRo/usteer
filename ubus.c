@@ -697,7 +697,7 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
 		MSG(VERBOSE, "ROAMING sta=" MAC_ADDR_FMT " without target\n", MAC_ADDR_DATA(si->sta->addr));
 		usteer_ubus_disassoc_add_neighbors(si);
 	} else {
-		MSG(VERBOSE, "ROAMING sta=" MAC_ADDR_FMT " to " MAC_ADDR_FMT " (%s) disassociation timer %u\n", MAC_ADDR_DATA(target_node->bssid), MAC_ADDR_DATA(si->sta->addr), usteer_node_name(target_node), disassoc_timer);
+		MSG(VERBOSE, "ROAMING sta=" MAC_ADDR_FMT " to " MAC_ADDR_FMT " (%s) disassociation timer %u\n", MAC_ADDR_DATA(si->sta->addr), MAC_ADDR_DATA(target_node->bssid), usteer_node_name(target_node), disassoc_timer);
 		usteer_ubus_disassoc_add_neighbor(si, target_node);
 	}
 	return ubus_invoke(ubus_ctx, ln->obj_id, "bss_transition_request", b.head, NULL, 0, 100);
