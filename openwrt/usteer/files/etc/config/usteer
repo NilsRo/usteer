@@ -78,8 +78,9 @@ config usteer
 	
 	# Aggressiveness of roaming to push a station to another node
 	# 0 = no active roaming / 1 = passive roaming / 2 = roaming with disassociation imminent
-	# 3 = roaming with disassociation imminent and forced disassociation
-	#option aggressiveness 2
+	# 3 = roaming with disassociation imminent and timer
+	# 4 = roaming with disassociation imminent, timer and forced disassociation
+	#option aggressiveness 3
 
 	# List of MACs (lower case) to set aggressiveness per station (ff:ff:ff:ff:ff,2)
 	#list aggressiveness_mac_list ''
