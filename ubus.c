@@ -162,8 +162,8 @@ struct cfg_item {
 	_cfg(U32, remote_update_interval), \
 	_cfg(U32, remote_node_timeout), \
 	_cfg(BOOL, assoc_steering), \
-	_cfg(BOOL, aggressive_all), \
-	_cfg(ARRAY_CB, aggressive_mac_list), \
+	_cfg(U32, aggressiveness), \
+	_cfg(ARRAY_CB, aggressiveness_mac_list), \
 	_cfg(U32, aggressive_disassoc_timer), \
 	_cfg(I32, min_connect_snr), \
 	_cfg(I32, min_snr), \
@@ -673,7 +673,7 @@ usteer_ubus_disassoc_add_neighbors(struct sta_info *si)
 int usteer_ubus_bss_transition_request(struct sta_info *si,
                                        uint8_t dialog_token,
                                        bool disassoc_imminent,
-                                       uint8_t disassoc_timer,
+                                       uint32_t disassoc_timer,
                                        bool abridged,
                                        uint8_t validity_period,
                                        struct usteer_node *target_node)
@@ -689,12 +689,15 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
 	}
 	blobmsg_add_u8(&b, "abridged", abridged);
 	blobmsg_add_u32(&b, "validity_period", validity_period);
+	blobmsg_add_u32(&b, "mbo_reason", 5);
+	blobmsg_add_u32(&b, "reassoc_delay", config.reassociation_delay);
+
 	if (!target_node) {
 		// Add all known neighbors if no specific target set
-		MSG(VERBOSE, "ROAMING requested for sta=" MAC_ADDR_FMT " without target\n", MAC_ADDR_DATA(si->sta->addr));
+		MSG(VERBOSE, "ROAMING sta=" MAC_ADDR_FMT " without target\n", MAC_ADDR_DATA(si->sta->addr));
 		usteer_ubus_disassoc_add_neighbors(si);
 	} else {
-		MSG(VERBOSE, "ROAMING requested for sta=" MAC_ADDR_FMT " to %s with disassociation timer %i\n", MAC_ADDR_DATA(si->sta->addr), usteer_node_name(target_node), disassoc_timer);
+		MSG(VERBOSE, "ROAMING sta=" MAC_ADDR_FMT " to " MAC_ADDR_FMT " (%s) disassociation timer %u\n", MAC_ADDR_DATA(target_node->bssid), MAC_ADDR_DATA(si->sta->addr), usteer_node_name(target_node), disassoc_timer);
 		usteer_ubus_disassoc_add_neighbor(si, target_node);
 	}
 	return ubus_invoke(ubus_ctx, ln->obj_id, "bss_transition_request", b.head, NULL, 0, 100);
@@ -703,7 +706,7 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
 int usteer_ubus_band_steering_request(struct sta_info *si,
                                       uint8_t dialog_token,
                                       bool disassoc_imminent,
-                                      uint8_t disassoc_timer,
+                                      uint32_t disassoc_timer,
                                       bool abridged,
                                       uint8_t validity_period)
 {
@@ -720,6 +723,8 @@ int usteer_ubus_band_steering_request(struct sta_info *si,
 	}
 	blobmsg_add_u8(&b, "abridged", abridged);
 	blobmsg_add_u32(&b, "validity_period", validity_period);
+	blobmsg_add_u32(&b, "mbo_reason", 5);
+	blobmsg_add_u32(&b, "reassoc_delay", config.reassociation_delay);
 
 	c = blobmsg_open_array(&b, "neighbors");
 	for_each_local_node(node) {
@@ -730,7 +735,7 @@ int usteer_ubus_band_steering_request(struct sta_info *si,
 	}
 	blobmsg_close_array(&b, c);
 	if (sizeof(si->node) > 0) {
-		MSG(VERBOSE, "BAND STEERING requested for sta=" MAC_ADDR_FMT " with disassociation timer %i\n", MAC_ADDR_DATA(si->sta->addr), disassoc_timer);
+		MSG(VERBOSE, "BAND STEERING sta=" MAC_ADDR_FMT " disassociation timer %u\n", MAC_ADDR_DATA(si->sta->addr), disassoc_timer);
 		return ubus_invoke(ubus_ctx, ln->obj_id, "bss_transition_request", b.head, NULL, 0, 100);
 	} else
 		MSG(VERBOSE, "BAND STEERING no targets found for sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
@@ -771,13 +776,13 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 	return ubus_invoke(ubus_ctx, ln->obj_id, "rrm_beacon_req", b.head, NULL, 0, 100);
 }
 
-void usteer_ubus_kick_client(struct sta_info *si)
+void usteer_ubus_kick_client(struct sta_info *si, uint32_t kick_reason_code)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
-	blobmsg_add_u32(&b, "reason", config.load_kick_reason_code);
+	blobmsg_add_u32(&b, "reason", kick_reason_code);
 	blobmsg_add_u8(&b, "deauth", 1);
 	ubus_invoke(ubus_ctx, ln->obj_id, "del_client", b.head, NULL, 0, 100);
 	usteer_sta_disconnected(si);

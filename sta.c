@@ -77,24 +77,26 @@ usteer_sta_info_timeout(struct usteer_timeout_queue *q, struct usteer_timeout *t
 }
 
 static void
-usteer_sta_update_aggressive(struct sta *sta)
+usteer_sta_update_aggressiveness(struct sta *sta)
 {
 	struct blob_attr *cur;
 	int rem;
 	char sta_mac[18];
+	char config_entry[20];
+	char config_mac[18];
+	
 	sprintf(sta_mac, MAC_ADDR_FMT, MAC_ADDR_DATA(sta->addr));
-
-	if (config.aggressive_all)
-		sta->aggressive = true;
-	else {
-		sta->aggressive = false;
-		blobmsg_for_each_attr(cur, config.aggressive_mac_list, rem) {
-			if (strcmp(blobmsg_get_string(cur), sta_mac) != 0)
-				continue;
-
-			sta->aggressive = true;
-			break;
-		}
+	sta->aggressiveness = config.aggressiveness;
+	blobmsg_for_each_attr(cur, config.aggressiveness_mac_list, rem) {
+		strcpy(config_entry, blobmsg_get_string(cur));
+		if (strlen(config_entry) != 19)
+			continue;
+		strncpy(config_mac, config_entry, 18);
+		config_mac[17] = '\0';
+		if (strcmp(config_mac, sta_mac) != 0)
+			continue;
+		sta->aggressiveness = config_entry[18] - '0';
+		break;
 	}
 }
 
@@ -127,7 +129,7 @@ usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create)
 	si->created = current_time;
 	*create = true;
 
-	usteer_sta_update_aggressive(sta);
+	usteer_sta_update_aggressiveness(sta);
 
 	/* Node is by default not connected. */
 	usteer_sta_disconnected(si);

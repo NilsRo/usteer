@@ -373,11 +373,14 @@ usteer_roam_trigger_sm(struct usteer_local_node *ln, struct sta_info *si)
 			break;
 		}
 
-		if (!si->kick_time && si->sta->aggressive)
-			si->kick_time = current_time + config.roam_kick_delay;
+		if (!candidate->node->rrm_nr)
+			MSG(FATAL, "Candiates node rrm nr not returned from hostapd. Neighbor list empty!");
+
 		si->roam_transition_request_validity_end = current_time + 10000;
 		validity_period = 10000 / usteer_local_node_get_beacon_interval(ln); /* ~ 10 seconds */
-		if (si->sta->aggressive) {
+		if (si->sta->aggressiveness >= 2) {
+			if (!si->kick_time)
+				si->kick_time = current_time + config.roam_kick_delay;
 			disassoc_timer = (si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln);
 			usteer_ubus_bss_transition_request(si, 1, true, disassoc_timer, true, validity_period, candidate->node);
 		} else {
@@ -395,6 +398,10 @@ bool usteer_policy_can_perform_roam(struct sta_info *si)
 {
 	/* Only trigger for connected STAs */
 	if (si->connected != STA_CONNECTED)
+		return false;
+
+	/* Only trigger for STA with active roaming */
+	if (!si->sta->aggressiveness)
 		return false;
 
 	/* Skip on pending kick */
@@ -498,8 +505,7 @@ usteer_local_node_snr_kick(struct usteer_local_node *ln)
 		ev.threshold.cur = si->signal;
 		ev.count = si->kick_count;
 		usteer_event(&ev);
-
-		usteer_ubus_kick_client(si);
+		usteer_ubus_kick_client(si, 1);
 		return;
 	}
 }
@@ -582,8 +588,7 @@ usteer_local_node_load_kick(struct usteer_local_node *ln)
 	ev.si_cur = kick1;
 	ev.si_other = candidate;
 	ev.count = kick1->kick_count;
-
-	usteer_ubus_kick_client(kick1);
+	usteer_ubus_kick_client(kick1, config.load_kick_reason_code);
 
 out:
 	usteer_event(&ev);
@@ -595,10 +600,11 @@ usteer_local_node_perform_kick(struct usteer_local_node *ln)
 	struct sta_info *si;
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
-		if (!si->kick_time || si->kick_time > current_time)
-			continue;
-
-		usteer_ubus_kick_client(si);
+		if (si->sta->aggressiveness >= 3) {
+			if (!si->kick_time || si->kick_time > current_time)
+				continue;
+			usteer_ubus_kick_client(si, 12);
+		}
 	}
 }
 

@@ -180,10 +180,10 @@ usteer_handle_bss_tm_response(struct usteer_local_node *ln, struct blob_attr *ms
 	si->bss_transition_response.status_code = blobmsg_get_u8(tb[BSS_TM_RESPONSE_STATUS_CODE]);
 	si->bss_transition_response.timestamp = current_time;
 
-	if (si->bss_transition_response.status_code) {
+	if (si->bss_transition_response.status_code && si->kick_time) {
 		/* Cancel imminent kick in case BSS transition was rejected */
 		si->kick_time = 0;
-		MSG(VERBOSE, "Kick canceled because transition was rejected by sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
+		MSG(VERBOSE, "Kick canceled because transition rejected by sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
 	}
 
 	return 0;
@@ -978,20 +978,20 @@ void config_get_ssid_list(struct blob_buf *buf)
 		blobmsg_add_blob(buf, config.ssid_list);
 }
 
-void config_set_aggressive_mac_list(struct blob_attr *data)
+void config_set_aggressiveness_mac_list(struct blob_attr *data)
 {
-	free(config.aggressive_mac_list);
+	free(config.aggressiveness_mac_list);
 
 	if (data && blobmsg_len(data))
-		config.aggressive_mac_list = blob_memdup(data);
+		config.aggressiveness_mac_list = blob_memdup(data);
 	else
-		config.aggressive_mac_list = NULL;
+		config.aggressiveness_mac_list = NULL;
 }
 
-void config_get_aggressive_mac_list(struct blob_buf *buf)
+void config_get_aggressiveness_mac_list(struct blob_buf *buf)
 {
-	if (config.aggressive_mac_list)
-		blobmsg_add_blob(buf, config.aggressive_mac_list);
+	if (config.aggressiveness_mac_list)
+		blobmsg_add_blob(buf, config.aggressiveness_mac_list);
 }
 
 void usteer_local_nodes_init(struct ubus_context *ctx)

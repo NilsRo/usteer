@@ -73,11 +73,16 @@ config usteer
 	# Timeout (ms) for which a client will not be steered after rejecting a BSS-transition-request
 	#option steer_reject_timeout 60000
 
-	# Use aggressive roaming to push clients to another AP for all stations (0/1)
-	#option aggressive_all 0
+	# Timeout (s "1024ms") a station is requested to avoid reassociation after bss transition
+	#option reassociation_delay 30
+	
+	# Aggressiveness of roaming to push STA to another node
+	# 0 = no active roaming / 1 = passive roaming / 2 = roaming with disassociation immiment
+	# 3 = roaming with disassociation immiment and active disassociation
+	#option aggressiveness 2
 
-	# List of MACs (lower case) to enable aggressive roaming on. If not set all stations will handled aggressive
-	#list aggressive_mac_list ''
+	# List of MACs (lower case) with aggressiveness per STA (ff:ff:ff:ff:ff,2)
+	#list aggressiveness_mac_list ''
 
 	# Timeout (in ms) after which a association following a disassociation is not seen
 	# as a roam
