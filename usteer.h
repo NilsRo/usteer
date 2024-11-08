@@ -260,6 +260,7 @@ struct sta_info {
 	uint8_t roam_tries;
 	uint64_t roam_event;
 	uint64_t roam_transition_request_validity_end;
+	uint64_t roam_transition_start;
 	uint64_t roam_kick;
 	uint64_t roam_scan_start;
 	uint64_t roam_scan_timeout_start;
@@ -271,6 +272,7 @@ struct sta_info {
 
 	struct {
 		bool below_snr;
+		int signal_connected;
 	} band_steering;
 
 	uint64_t kick_time;

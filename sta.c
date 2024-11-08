@@ -123,13 +123,13 @@ usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create)
 
 	si = calloc(1, sizeof(*si));
 	si->node = node;
+	usteer_sta_update_aggressiveness(sta);
 	si->sta = sta;
 	list_add(&si->list, &sta->nodes);
 	list_add(&si->node_list, &node->sta_info);
 	si->created = current_time;
 	*create = true;
-
-	usteer_sta_update_aggressiveness(sta);
+	si->band_steering.signal_connected = NO_SIGNAL;
 
 	/* Node is by default not connected. */
 	usteer_sta_disconnected(si);
@@ -177,6 +177,7 @@ void usteer_sta_disconnected(struct sta_info *si)
 	si->connected = STA_NOT_CONNECTED;
 	si->kick_time = 0;
 	si->connected_since = 0;
+	si->band_steering.signal_connected = NO_SIGNAL;
 	usteer_sta_info_update_timeout(si, config.local_sta_timeout);
 }
 

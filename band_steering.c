@@ -20,8 +20,17 @@
 
 void usteer_band_steering_sta_update(struct sta_info *si)
 {
-	if (si->signal < usteer_snr_to_signal(si->node, config.band_steering_min_snr))
+	if (si->band_steering.signal_connected == NO_SIGNAL) {
+		si->band_steering.signal_connected = si->signal;
+		return;
+	}
+	if (si->signal < usteer_snr_to_signal(si->node, config.band_steering_min_snr) || si->signal < si->band_steering.signal_connected - 5) {
 		si->band_steering.below_snr = true;
+		MSG(DEBUG, "BAND STEERING sta=" MAC_ADDR_FMT " - aborted: Signal %i, Signal connected %i\n", MAC_ADDR_DATA(si->sta->addr), si->signal, si->band_steering.signal_connected);
+	}
+	/* Signal became worse, adapt connected threshold. */
+	if (si->signal < si->band_steering.signal_connected)
+		si->band_steering.signal_connected -= (si->band_steering.signal_connected - si->signal) / 2;
 }
 
 bool usteer_band_steering_is_target(struct usteer_local_node *ln, struct usteer_node *node)
@@ -105,6 +114,8 @@ void usteer_band_steering_perform_steer(struct usteer_local_node *ln)
 					si->kick_time = current_time + config.roam_kick_delay;
 				if (si->sta->aggressiveness >= 3)
 					disassoc_timer = (si->kick_time - current_time) / usteer_local_node_get_beacon_interval(ln);
+				else
+					disassoc_timer = 0;
 				usteer_ubus_band_steering_request(si, 0, true, disassoc_timer, true, validity_period);
 			} else
 				usteer_ubus_band_steering_request(si, 0, false, 0, true, validity_period);
