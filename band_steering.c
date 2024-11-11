@@ -20,17 +20,25 @@
 
 void usteer_band_steering_sta_update(struct sta_info *si)
 {
-	if (si->band_steering.signal_connected == NO_SIGNAL) {
-		si->band_steering.signal_connected = si->signal;
+	if (si->connected == STA_NOT_CONNECTED) {
+		if (si->band_steering.signal_threshold != NO_SIGNAL) {
+			si->band_steering.signal_threshold = NO_SIGNAL;
+		}
 		return;
 	}
-	if (si->signal < usteer_snr_to_signal(si->node, config.band_steering_min_snr) || si->signal < si->band_steering.signal_connected - 5) {
-		si->band_steering.below_snr = true;
-		MSG(DEBUG, "BAND STEERING sta=" MAC_ADDR_FMT " - aborted: Signal %i, Signal connected %i\n", MAC_ADDR_DATA(si->sta->addr), si->signal, si->band_steering.signal_connected);
+	if (si->connected != STA_NOT_CONNECTED && si->band_steering.signal_threshold == NO_SIGNAL) {
+		si->band_steering.signal_threshold = si->signal;
+		MSG(DEBUG, "band steering station " MAC_ADDR_FMT " (%s) set threshold (signal threshold %u)\n", MAC_ADDR_DATA(si->sta->addr), usteer_node_name(si->node), si->band_steering.signal_threshold);
+		return;
 	}
-	/* Signal became worse, adapt connected threshold. */
-	if (si->signal < si->band_steering.signal_connected)
-		si->band_steering.signal_connected -= (si->band_steering.signal_connected - si->signal) / 2;
+
+	/* Adapt signal threshold to actual signal quality */
+	if (si->signal < si->band_steering.signal_threshold) {
+		si->band_steering.signal_threshold--;
+		MSG(DEBUG, "band steering station " MAC_ADDR_FMT " (%s) reduce threshold (signal: %d, signal threshold: %u)\n", MAC_ADDR_DATA(si->sta->addr), usteer_node_name(si->node), si->signal, si->band_steering.signal_threshold);
+	}
+	if (si->signal < usteer_snr_to_signal(si->node, config.band_steering_min_snr) || si->signal < si->band_steering.signal_threshold + config.band_steering_signal_threshold)
+		si->band_steering.below_snr = true;
 }
 
 bool usteer_band_steering_is_target(struct usteer_local_node *ln, struct usteer_node *node)
